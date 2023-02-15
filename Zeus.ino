@@ -7,6 +7,7 @@ QTRSensors qtr;
 #define BIN1 A3
 #define BIN2 A4
 
+uint8_t thrs = 700;
 uint8_t basesa = 100;
 uint8_t basesb = 100;
 
@@ -62,6 +63,39 @@ void loop()
 
 }
 
+
+
+char slt_turn(unsigned char fnd_l, unsigned char fnd_s, unsigned char fnd_r){
+  if(fnd_l)
+    return 'l';
+  else if(fnd_s)
+    return 's';
+  else if(fnd_r)
+    return 'r';
+  else 
+    return 'b'; 
+  }
+
+
+void turn(char direct){
+  switch(direct){
+    case 'l':
+    break;
+    
+    case 'r':
+    break;
+
+    case 'b':
+    break;
+
+    case 's':
+    break;
+    
+    }
+  
+  }
+
+
 void calib(){
   for (uint16_t i = 0; i < 100; i++)
   {
@@ -69,8 +103,57 @@ void calib(){
   }
 }
 
+void maze(){
+  
+  while(1){
+    pid();
+    unsigned char fnd_l = 0;
+    unsigned char fnd_r = 0;
+    unsigned char fnd_s = 0;
+    qtr.readLineBlack(sv);
+    if(sv[0] > thrs){
+      fnd_l = 1;
+      }
+    else if(sv[7] > thrs){
+      for(int i = 0; i<100; i++){
+        qtr.readLineBlack(sv);
+        if(sv[0] > thrs){
+          fnd_l = 1;
+          delay(200);
+          goto bailout;
+          }
+        
+        }
+        fnd_r = 1;
+      } 
+      if(fnd_l == 1){
+        delay(200);
+        }
+    
+  
+  
+  
+
+
+bailout:
+  qtr.readLineBlack(sv);
+  if(sv[1] > thrs || sv[2] > thrs || sv[3] > thrs || sv[4] > thrs || sv[5] > thrs || sv[6] > thrs){
+    fnd_s = 1;
+    }
+qtr.readLineBlack(sv);
+if(sv[0] > thrs && sv[1] > thrs && sv[2] > thrs && sv[3] > thrs && sv[4] > thrs && sv[5] > thrs && sv[6] > thrs && sv[7] > thrs)
+break;
+
+
+
+
+  }
+}
+
 void pid(){
-  uint16_t pos = qtr.readLineBlack(sv);
+
+  while(1){
+   uint16_t pos = qtr.readLineBlack(sv);
   int err = 3500 - pos;
   p = err;
   d = err-preverr;
@@ -93,8 +176,20 @@ void pid(){
   if(sb<-20){
     sb = -20;    
     }  
+  movement(sa, sb);
+
+  if(sv[0] > thrs || sv[7] > thrs){
+    movement(50, 50);
+    return;
+    }
+  if(sv[0] < thrs && sv[1] < thrs && sv[2] < thrs && sv[3] < thrs && sv[4] < thrs && sv[5] < thrs && sv[6] < thrs && sv[7]){
+    movement(50, 50);
+    return;
+    }
   
-  }
+  } 
+    }
+  
 
 void movement(int Sa, int Sb){
   if(Sa<0){
