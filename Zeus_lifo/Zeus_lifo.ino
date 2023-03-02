@@ -1,23 +1,24 @@
 #include <QTRSensors.h>
-#define ain1 A4
-#define ain2 A3
+#define ain1 A3
+#define ain2 A4
 #define pwm_a 10
-#define bin1 A6
-#define bin2 A5
-#define pwm_b 11
-uint8_t sa = 0;
-uint8_t sb = 0;
+#define bin1 A5
+#define bin2 A6
+#define pwm_b 9
+int sa = 0;
+int sb = 0;
+int temp = 0;
 QTRSensors qtr;
 const uint8_t sc = 8;
 uint16_t sv[sc];
-uint16_t P = 0;
-uint16_t I = 0;
-uint16_t D = 0;
-float Kp = 0.07;
-float Ki = 0.005;
-float Kd = 0.7;
-uint16_t error = 0;
-uint16_t preverror = 0;
+int P = 0;
+int I = 0;
+int D = 0;
+float Kp = 0.08;
+float Ki = 0.001;
+float Kd = 1;
+int error = 0;
+int preverror = 0;
 void setup()
 {
   pinMode(ain1, OUTPUT);
@@ -27,7 +28,7 @@ void setup()
   pinMode(bin2, OUTPUT);
   pinMode(pwm_b, OUTPUT);
   qtr.setTypeRC();
-  qtr.setSensorPins((const uint8_t[]){3, 4, 5, 6, 7, 8, 9, 12}, sc);
+  qtr.setSensorPins((const uint8_t[]){3, 4, 5, 6, 7, 8, 11, 12}, sc);
   qtr.setEmitterPin(2);
 
   delay(500);
@@ -44,11 +45,12 @@ void setup()
 void loop()
 {
   
-  
-
+ pid();
+ mspeed(0,0);
+ 
   
 }
-void mspeed(uint8_t sa, uint8_t sb){
+void mspeed(int sa, int sb){
   if(sa < 0){
     sa = -sa;
     digitalWrite(ain1, LOW);
@@ -73,7 +75,7 @@ void mspeed(uint8_t sa, uint8_t sb){
 
 void calib(){
   mspeed(-100, 100);
-  for (uint16_t i = 0; i < 100; i++)
+  for (uint16_t i = 0; i < 150; i++)
   {
     qtr.calibrate();
   }
@@ -81,40 +83,53 @@ void calib(){
   }
 
 void pid(){
-  uint16_t pos = qtr.readLineBlack(sv);
-  error = 3500 - pos;
+    while(1){
+    uint16_t pos = qtr.readLineBlack(sv);
+    error = 3500 - pos;
+    if(sv[0]>700 && sv[1]>700 && sv[2]>700 && sv[3]>700 && sv[4]>700 && sv[5]>700 && sv[6]>700 && sv[7]>700){
+      return;
+      }
+   
+      
+      
+ 
   if(pos ==0){
     if(sa>sb){
-      mspeed(150,0);
-      }else if(sb > sa){
-        mspeed(0,150);
-        }else if(sa == sb){
-          mspeed(0,150);
+      mspeed(220,0);
+      }
+    else if(sb > sa){
+        mspeed(0,220);
+        }
+    else if(sa == sb){
+          mspeed(220,0);
           }
-    }else{
+    }
+    else{
       P = error;
       I = I + error;
       D = error - preverror;
       preverror = error;
 
-      uint16_t speedchange = P*Kp + I*Ki + D*Kd;
+      int speedchange = P*Kp + I*Ki + D*Kd;
 
-      uint16_t msa = 150 + speedchange;
-      uint16_t msb = 150 - speedchange;
+      int msa = 250 + speedchange;
+      int msb = 250 - speedchange;
 
-      if(msa > 150){
-        msa = 150;
+      if(msa > 250){
+        msa = 250;
         }
-      if(msb > 150){
-        msb = 150;
+      if(msb > 250){
+        msb = 250;
         }
-      if(msa < 0){
-        msa = 0;
+      if(msa < -30){
+        msa = -30;
         }
-      if(msb > 0){
-        msb = 0;
+      if(msb < -30){
+        msb = -30;
         }
 
       mspeed(msa, msb);
       } 
+    }
   }
+  
