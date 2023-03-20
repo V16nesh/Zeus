@@ -5,6 +5,8 @@
 #define bin1 A5
 #define bin2 A6
 #define pwm_b 9
+#define trshd 750
+
 int sa = 0;
 int sb = 0;
 int temp = 0;
@@ -45,7 +47,7 @@ void setup()
 void loop()
 {
   
- pid();
+ SolveMaze();
  
  
   
@@ -82,24 +84,45 @@ void calib(){
   mspeed(0,0);
   }
 
+char turnselection(unsigned char fndL, unsigned char fndS, unsigned char fndR){
+
+    if(fndL)
+      return 'L';
+    else if (fndS)
+      return 'S';
+    else if (fndR)
+      return 'R';
+    else
+      return 'B';
+  }
+
 void pid(){
+  while(1){
     
     uint16_t pos = qtr.readLineBlack(sv);
     error = 3500 - pos;
     
-   
+   if(sv[7]>trshd || sv[0]>trshd){
+    mspeed(130,130);
+    return;
+    }
+
+   if(sv[7]>trshd && sv[6]>trshd && sv[5]>trshd && sv[4]>trshd && sv[3]>trshd && sv[2]>trshd && sv[1]>trshd && sv[0]>trshd){
+    mspeed(130,130);
+    return;
+    }
       
       
  
   if(pos ==0){
     if(sa>sb){
-      mspeed(230,0);
+      mspeed(130,0);
       }
     else if(sb > sa){
-        mspeed(0,230);
+        mspeed(0,130);
         }
     else if(sa == sb){
-          mspeed(230,0);
+          mspeed(130,0);
           }
     }
     else{
@@ -113,11 +136,11 @@ void pid(){
       int msa = 250 + speedchange;
       int msb = 250 - speedchange;
 
-      if(msa > 250){
-        msa = 250;
+      if(msa > 130){
+        msa = 130;
         }
-      if(msb > 250){
-        msb = 250;
+      if(msb > 130){
+        msb = 130;
         }
       if(msa < -30){
         msa = -30;
@@ -128,6 +151,50 @@ void pid(){
 
       mspeed(msa, msb);
       } 
+  }
     
+  }
+
+void SolveMaze(){
+  while(1){
+    pid();
+    unsigned char fndL = 0;
+    unsigned char fndR = 0;
+    unsigned char fndS = 0;
+
+    qtr.readLineBlack(sv);
+
+    if(sv[7] > trshd){
+      fndL = 1;
+      delay(300);
+      }
+      else if(sv[0] > trshd){
+        for(int i=0; i<100; i++){
+          qtr.readLineBlack(sv);
+
+          if(sv[7] > trshd){
+            fndL = 1;
+            delay(300);
+            goto checkS;
+            }
+          }
+          fndR = 1;
+        }
+      checkS:
+          qtr.readLineBlack(sv);
+          if(sv[6]>trshd || sv[5]>trshd || sv[4]>trshd || sv[3]>trshd || sv[2]>trshd || sv[1]>trshd){
+            fndS = 1;
+          }
+
+      qtr.readLineBlack(sv);
+      if(sv[7]>trshd || sv[6]>trshd || sv[5]>trshd || sv[4]>trshd || sv[3]>trshd || sv[2]>trshd || sv[1]>trshd ||  sv[0]>trshd){
+        break;
+        }
+      unsigned char dir = turnselection(fndL, fndS, fndR);
+
+      //turn(dir);
+
+      
+    }
   }
   
