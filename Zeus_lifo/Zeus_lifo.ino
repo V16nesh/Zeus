@@ -64,7 +64,7 @@ void mspeed(int sa, int sb){
   if(sb < 0){
     sb = -sb;
     digitalWrite(bin1, LOW);
-    digitalWrite(bin2, LOW);
+    digitalWrite(bin2, HIGH);
     analogWrite(pwm_b, sb);
     }else{
       digitalWrite(bin1, HIGH);
